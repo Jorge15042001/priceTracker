@@ -3,19 +3,23 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
-
-	"io/ioutil"
+	"time"
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
-var datasabe *gorm.DB
+var database *gorm.DB
+var priceTarackerService RepitableEventHandler
 
 func main() {
-	datasabe = getDataBaseConnection() //stablish connection with the datasabe
+	priceTarackerService = makeRepitableEventHandler()
+	database = getDataBaseConnection() //stablish connection with the datasabe
+
+	startTrackingPrices()
 
 	r := mux.NewRouter()
 	//serving static files
@@ -51,7 +55,7 @@ func agregarProducto(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(reqBody, &producto)
 
-	datasabe.Create(&producto)
+	database.Create(&producto)
 
 	json.NewEncoder(w).Encode(producto)
 
@@ -62,7 +66,11 @@ func eliminarProducto(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(reqBody, &producto)
 
-	datasabe.Delete(&producto)
+	//eliminar repitable event to query pproduct details
+	priceTarackerService.Stop(producto.ProductID)
+
+	//eliminarProducto de la base de datos
+	database.Delete(&producto)
 	response := messageReponse{"ok", "ok"}
 
 	json.NewEncoder(w).Encode(response)
@@ -70,7 +78,7 @@ func eliminarProducto(w http.ResponseWriter, r *http.Request) {
 }
 func obtenerProductos(w http.ResponseWriter, r *http.Request) {
 	products := []Product{}
-	result := datasabe.Find(&products)
+	result := database.Find(&products)
 
 	if result.Error != nil {
 		json.NewEncoder(w).Encode(messageReponse{
@@ -93,7 +101,7 @@ func agregarOpcion(w http.ResponseWriter, r *http.Request) {
 
 	//query porduct
 	var product Product
-	result := datasabe.First(&product, newOption.ProductID)
+	result := database.First(&product, newOption.ProductID)
 
 	if result.Error != nil {
 		json.NewEncoder(w).Encode(messageReponse{
@@ -103,7 +111,9 @@ func agregarOpcion(w http.ResponseWriter, r *http.Request) {
 	//add the productOption to the list
 	product.Options = append(product.Options, newOption.Option)
 	//update the database
-	datasabe.Save(product)
+	database.Save(product)
+
+	priceTarackerService.RegisterRepitableEvent(product.ProductID, makeExtractPriceCallBack(product), time.Duration(product.TrackingInterval*1000000000))
 
 	json.NewEncoder(w).Encode(newOption.Option)
 
@@ -115,7 +125,7 @@ func obtenerOpciones(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(reqBody, &producto)
 
-	result := datasabe.Preload("Options").Find(&producto)
+	result := database.Preload("Options").Find(&producto)
 
 	if result.Error != nil {
 		json.NewEncoder(w).Encode(messageReponse{
@@ -133,12 +143,19 @@ func eliminarOpcion(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(reqBody, &opcion)
 
-	result := datasabe.Delete(&opcion)
+	result := database.Delete(&opcion)
 	if result.Error != nil {
 		json.NewEncoder(w).Encode(messageReponse{
 			"Error", "No es posible encontrar Opcion de product"})
 		return
 	}
+	//dejar de consultar informacion sobre el producto online
+	producto := Product{
+		ProductID: opcion.ProductID,
+	}
+	//obtener opciones de la base de datos reconstruir la llamada repetitiva
+	result := database.Preload("Options").Find(&producto)
+	priceTarackerService.RegisterRepitableEvent(producto.ProductID, makeExtractPriceCallBack(producto), time.Duration(producto.TrackingInterval*1000000000))
 
 	json.NewEncoder(w).Encode(messageReponse{
 		"Ok", "Ok"})
@@ -149,7 +166,7 @@ func obtenerHistorialPrecios(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(reqBody, &opcion)
 
-	result := datasabe.Preload("Prices").Find(&opcion)
+	result := database.Preload("Prices").Find(&opcion)
 
 	if result.Error != nil {
 		json.NewEncoder(w).Encode(messageReponse{
@@ -169,7 +186,7 @@ func cambiarIntervaloBusqueda(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(reqBody, &productoNuevo)
 
 	// read existing product from datasabe
-	result := datasabe.Find(&producto, productoNuevo.ProductID)
+	result := database.Find(&producto, productoNuevo.ProductID)
 
 	if result.Error != nil {
 		json.NewEncoder(w).Encode(messageReponse{
@@ -179,9 +196,37 @@ func cambiarIntervaloBusqueda(w http.ResponseWriter, r *http.Request) {
 	// copy TrackingInterval field from productoNuevo
 	producto.TrackingInterval = productoNuevo.TrackingInterval
 	//update the datasabe
-	datasabe.Save(&producto)
+	database.Save(&producto)
+
+	result := database.Preload("Options").Find(&producto)
+	priceTarackerService.RegisterRepitableEvent(producto.ProductID, makeExtractPriceCallBack(producto), time.Duration(producto.TrackingInterval*1000000000))
 
 	response := messageReponse{"ok", "ok"}
 	json.NewEncoder(w).Encode(response)
 
+}
+
+func startTrackingPrices() {
+
+	var products []Product
+	database.Preload("Options.Prices").Preload("Options").Find(&products)
+
+	for _, product := range products {
+		fmt.Println("name: ", product.ProductName, "Duration: ", product.TrackingInterval)
+		timeDuration := time.Duration(product.TrackingInterval * 1000000000)
+		callback := makeExtractPriceCallBack(product)
+		priceTarackerService.RegisterRepitableEvent(product.ProductID, callback, timeDuration)
+	}
+	fmt.Println(priceTarackerService.EventLookUp)
+
+}
+func makeExtractPriceCallBack(product Product) func() {
+	return func() {
+		for _, option := range product.Options {
+			UpdateProductInformationFromInternet(&option)
+			database.Save(&option)
+
+			fmt.Println("query from internet for option with id: ", option.OptionID)
+		}
+	}
 }
