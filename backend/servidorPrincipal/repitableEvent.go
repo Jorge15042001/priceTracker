@@ -24,28 +24,31 @@ func makeRepitableEvent(interval time.Duration, callBack func()) RepitableEvent 
 }
 
 type RepitableEventHandler struct {
-	eventLookUp map[uint]RepitableEvent
+	EventLookUp map[uint]RepitableEvent
 }
 
 func (this *RepitableEventHandler) RegisterRepitableEvent(key uint, callBack func(), interval time.Duration) {
-	this.eventLookUp[key] = makeRepitableEvent(interval, callBack)
+	this.EventLookUp[key] = makeRepitableEvent(interval, callBack)
 }
 func (this *RepitableEventHandler) ChangeCallBack(key uint, callBack func()) {
-	this.eventLookUp[key].ticker.Stop()
+	this.EventLookUp[key].ticker.Stop()
 
-	oldTimeInterval := this.eventLookUp[key].TimeInterval
-	this.eventLookUp[key] = makeRepitableEvent(oldTimeInterval, callBack)
+	oldTimeInterval := this.EventLookUp[key].TimeInterval
+	this.EventLookUp[key] = makeRepitableEvent(oldTimeInterval, callBack)
 }
 func (this *RepitableEventHandler) ChangeInterval(key uint, interval time.Duration) {
-	this.eventLookUp[key].ticker.Stop()
+	this.EventLookUp[key].ticker.Stop()
 
-	oldCallBack := this.eventLookUp[key].CallBack
-	this.eventLookUp[key] = makeRepitableEvent(interval, oldCallBack)
+	oldCallBack := this.EventLookUp[key].CallBack
+	this.EventLookUp[key] = makeRepitableEvent(interval, oldCallBack)
 }
 func (this *RepitableEventHandler) StopAll() {
-	for _, event := range this.eventLookUp {
+	for _, event := range this.EventLookUp {
 		event.ticker.Stop()
 	}
+}
+func (this *RepitableEventHandler) Stop(key uint) {
+	this.EventLookUp[key].ticker.Stop()
 }
 
 func makeRepitableEventHandler() RepitableEventHandler {
