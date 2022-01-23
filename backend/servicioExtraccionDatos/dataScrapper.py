@@ -76,6 +76,10 @@ class EbayScraper(WebStoreScraper):
 class MercadoLibreScraper(WebStoreScraper):
     def execute(self) -> productInformation:
         price = "".join(driver.find_element(By.CLASS_NAME,"price-tag-amount").text.split("\n")[1:]).replace(",",".")
+        price_segments = price.split(".")
+        if len(price_segments[-1])==3:
+            price = "".join(price_segments)
+        print("\n\n",price,"\n\n")
         image_src = driver.find_element(By.CSS_SELECTOR,".ui-pdp-gallery__figure img").get_attribute("src")
         puntuacion = driver.find_element(By.CLASS_NAME, "ui-pdp-seller__sales-description").text.strip("%")
         arrival_date = date.today()
@@ -86,7 +90,6 @@ class MercadoLibreScraper(WebStoreScraper):
 def getScrapingStrategy(url:str)  ->WebStoreScraper:
     _, td, tsu = extract(url) # prints abc, hostname, com
     domain = td + '.' + tsu.split(".")[0] # will prints as hostname.com    
-    print(domain)
     if domain == "amazon.com":return AmazonScraper()
     if domain == "ebay.com":return EbayScraper()
     if domain == "mercadolibre.com":return MercadoLibreScraper()
@@ -115,7 +118,6 @@ def parse():
 
     info = scraper.run()
     info.link = url
-    print(str(info.__dict__))
     return json.dumps(info.__dict__)
 
 
