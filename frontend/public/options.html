@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<head>
+  <title>Price tracker</title>
+  <link rel="stylesheet" type="text/css" href="/static/css/tailwind.css">
+  <link rel="stylesheet" type="text/css" href="/static/css/pricetracker.css">
+  <link rel="stylesheet" type="text/css" href="/static/css/graphics.css">
+
+  <script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+
+  <script defer src="/static/scripts/load_options.js"></script>
+  <script defer src="/static/scripts/graphics.js"></script>
+  <script>
+    let optionID =parseInt( {{.ProductID}} );
+  </script>
+</head>
+<body>
+  <div class = "popup_screen_container" id="popups_container"></div>
+  <section>
+   <nav id="navbar">
+     <h1>Price tracker</h1> 
+     <div>
+       <p>Siguiendo </p>
+       <p id="options-count"> 5 </p>
+       <p> Opciones</p>
+     </div>
+    </nav> 
+  </section>
+  <section>
+   <h1>Opciones</h1> 
+  </section>
+  <section>
+    <div id="optionsList">
+      <div id="optionListHead" class="optionWrapper">
+       <p class="opt-id">Id</p> 
+       <p class="opt-store">Tienda</p> 
+       <p class="opt-arrival">Fecha de entrega</p> 
+       <p class="opt-opinion">Puntuacion</p> 
+       <p class="opt-price">Precio</p> 
+       <p class="opt-delete">   </p> 
+       <p class="opt-buy">   </p> </div>
+      <!-- <button class="optionWrapper long-button "> -->
+      <!--   <p>Agregar opcion</p> -->
+      <!-- </button> -->
+    </div>
+  </section>
+  <section>
+    <div id="container" class="svg-container"></div>
+  </section>
+</body>

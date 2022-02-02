@@ -1,0 +1,135 @@
+:root{
+  --color-primary: #B9C0DA;
+}
+
+#navbar {
+  @apply sm:flex;
+  @apply sm:justify-between;
+}
+
+#navbar > div{
+  @apply sm:flex;
+}
+#navbar > div > p{
+  @apply sm:px-2;
+}
+section{
+  @apply sm:container;
+  @apply sm:py-6 ;
+}
+
+#productList{
+  @apply sm:w-full;
+  @apply sm:flex sm:flex-row sm:flex-wrap;
+  @apply sm:justify-start;
+  @apply sm:drop-shadow-lg
+}
+.productWrapper{
+  @apply sm:relative;
+
+  @apply sm:m-5;
+  @apply sm:p-2;
+  
+  @apply sm:bg-white;
+
+
+  @apply sm:w-56;
+  @apply sm:h-72;
+
+  @apply sm:flex; 
+  @apply sm:flex-col;
+  @apply sm:justify-between;
+  
+}
+.nameWrapper {
+  @apply sm:flex;
+  @apply sm:justify-center;
+}
+
+.priceWrapper {
+  @apply sm:flex;
+  @apply sm:justify-center;
+}
+
+.imageWrapper{
+  @apply sm:w-full;
+  @apply sm:p-2;
+}
+.conerButton{
+  @apply sm:w-6 sm:h-6;
+  @apply sm:bg-red-500;
+  @apply sm:absolute sm:top-0 sm:right-0;
+
+}
+
+.productWrapper > .imageWrapper{
+  @apply sm:w-full sm:h-48;
+  }
+
+.imageWrapper > img{
+  @apply sm:w-full sm:h-full;
+  @apply sm:object-cover;
+}
+
+.full-button{
+  @apply sm:w-full sm:h-full;
+  @apply sm:text-2xl;
+  @apply sm:bg-green-600;
+  
+}
+
+#optionsList{
+  @apply sm:w-full;
+}
+
+.optionWrapper{
+  @apply sm:w-full;
+  @apply sm:px-3 sm:py-3;
+  @apply sm:my-2;
+
+  @apply sm:border-2;
+  @apply sm:flex sm:justify-between;
+
+}
+.optionWrapper > *{
+  @apply sm:grow ;
+}
+#optionListHead{
+  @apply sm:bg-blue-100;
+}
+.long-button {
+  @apply sm:bg-green-400;
+  @apply sm:w-full;
+  @apply sm:flex sm:justify-center;
+}
+.long-button > p{
+  @apply sm:text-center;
+}
+
+.opt-id {
+  @apply sm:grow-0 w-1/6;
+}
+.opt-store {
+  @apply sm:grow-0 w-1/6 ;
+}
+.opt-arrival{
+  @apply sm:grow-0 w-1/4;
+}
+.opt-opinion{
+  @apply sm:grow-0 w-1/6;
+}
+.opt-price {
+  @apply sm:grow-0 w-1/4;
+}
+.opt-delete{
+  @apply sm:grow-0 w-10;
+}
+.opt-buy{
+  @apply sm:grow-0 w-10;
+}
+.inline-button-wrapper{
+  @apply sm:w-5 sm:h-5;
+}
+.inline-button-wrappwe{
+  @apply sm:w-full sm:h-full;
+}

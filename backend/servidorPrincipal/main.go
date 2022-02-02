@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -23,10 +24,12 @@ func main() {
 
 	r := mux.NewRouter()
 	//serving static files
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(""))))
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
 	r.HandleFunc("/", mainHandler).Methods("GET") // render the landing page, all the products
-	// r.HandleFunc("/{producto}", getOpecionesDeProducto).Methods("GET")
+	r.HandleFunc("/agregarProductoGUI", agregarProductoGUI).Methods("GET")
+	r.HandleFunc("/producto/{productID}", getOpeciones).Methods("GET")
+	r.HandleFunc("/agregarOpcionGUI/{productID}", agregarOpcionGUI).Methods("GET")
 	// r.HandleFunc("/{producto}/{vendedor}", getOferta).Methods("GET")
 
 	r.HandleFunc("/agregarProducto", agregarProducto).Methods("POST")
@@ -47,9 +50,31 @@ func main() {
 	}
 }
 func mainHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Landing page")
+	tmpl := template.Must(template.ParseFiles("../../frontend/public/index.html"))
+	tmpl.Execute(w, nil)
 }
 
+func agregarProductoGUI(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles("../../frontend/public/agregarProducto.html"))
+	tmpl.Execute(w, nil)
+}
+
+type productIdWrapper struct {
+	ProductID string
+}
+
+func getOpeciones(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	data := productIdWrapper{vars["productID"]}
+	tmpl := template.Must(template.ParseFiles("../../frontend/public/options.html"))
+	tmpl.Execute(w, data)
+}
+func agregarOpcionGUI(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	data := productIdWrapper{vars["productID"]}
+	tmpl := template.Must(template.ParseFiles("../../frontend/public/agregarOpcion.html"))
+	tmpl.Execute(w, data)
+}
 func agregarProducto(w http.ResponseWriter, r *http.Request) {
 	var producto Product
 	reqBody, _ := ioutil.ReadAll(r.Body)
@@ -77,8 +102,8 @@ func eliminarProducto(w http.ResponseWriter, r *http.Request) {
 
 }
 func obtenerProductos(w http.ResponseWriter, r *http.Request) {
-	products := []Product{}
-	result := database.Find(&products)
+	var products []Product
+	result := database.Preload("Options.Prices").Preload("Options").Find(&products)
 
 	if result.Error != nil {
 		json.NewEncoder(w).Encode(messageReponse{
@@ -95,6 +120,7 @@ func agregarOpcion(w http.ResponseWriter, r *http.Request) {
 
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(reqBody, &newOption)
+	fmt.Println(newOption)
 
 	UpdateProductInformationFromInternet(&newOption.Option)
 	fmt.Println("newOption updated: ", &newOption.Option)
@@ -125,7 +151,7 @@ func obtenerOpciones(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(reqBody, &producto)
 
-	result := database.Preload("Options").Find(&producto)
+	result := database.Preload("Options.Prices").Preload("Options").Find(&producto)
 
 	if result.Error != nil {
 		json.NewEncoder(w).Encode(messageReponse{
@@ -154,7 +180,7 @@ func eliminarOpcion(w http.ResponseWriter, r *http.Request) {
 		ProductID: opcion.ProductID,
 	}
 	//obtener opciones de la base de datos reconstruir la llamada repetitiva
-	result := database.Preload("Options").Find(&producto)
+	result = database.Preload("Options").Find(&producto)
 	priceTarackerService.RegisterRepitableEvent(producto.ProductID, makeExtractPriceCallBack(producto), time.Duration(producto.TrackingInterval*1000000000))
 
 	json.NewEncoder(w).Encode(messageReponse{
@@ -198,7 +224,7 @@ func cambiarIntervaloBusqueda(w http.ResponseWriter, r *http.Request) {
 	//update the datasabe
 	database.Save(&producto)
 
-	result := database.Preload("Options").Find(&producto)
+	result = database.Preload("Options").Find(&producto)
 	priceTarackerService.RegisterRepitableEvent(producto.ProductID, makeExtractPriceCallBack(producto), time.Duration(producto.TrackingInterval*1000000000))
 
 	response := messageReponse{"ok", "ok"}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<head>
+  <title>Agregar Producto</title>
+
+  <link rel="stylesheet" type="text/css" href="/static/css/tailwind.css">
+  <link rel="stylesheet" type="text/css" href="/static/css/pricetracker.css">
+  <link rel="stylesheet" type="text/css" href="/static/css/agregarProduct.css">
+
+  <script defer src="/static/scripts/agregarOpcion.js"></script>
+
+  <script>
+const ProductID =parseInt( {{.ProductID}});
+  </script>
+
+</head>
+<body>
+    <div class="whole-page-form">
+      <form id="agregarProductoForm">
+      <div class="form-row">
+        <h1>Agregar Opcion</h1>
+       </div> 
+      <div class="form-row">
+        <label for="link">Link de compra: </label> 
+        <input type="text" name="link" value="" id="linkInput">
+      </div>
+      <div class="form-row row-button">
+        <button type="button" id="addButton">Agregar</button>
+      </div>
+
+      </form>
+    </div>
+</body>

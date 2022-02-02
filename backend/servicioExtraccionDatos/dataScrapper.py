@@ -12,7 +12,6 @@ app = Flask(__name__)
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 
-driver = Chrome("/usr/bin/chromedriver",options=chrome_options)
 
 months = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov','Dec']
 months_sp = [ 'ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov','Dic']
@@ -43,11 +42,11 @@ class productInformation:
 
 class WebStoreScraper(ABC):
     @abstractmethod
-    def execute(self) -> productInformation:
+    def execute(self,driver) -> productInformation:
         pass
 
 class AmazonScraper(WebStoreScraper):
-    def execute(self) -> productInformation:
+    def execute(self,driver) -> productInformation:
         price = driver.find_element(By.CLASS_NAME,"a-price-whole").text
         image_src = driver.find_element(By.ID,"landingImage").get_attribute("src")
         puntuacion = driver.find_element(By.CSS_SELECTOR, "#acrPopover .a-declarative .a-popover-trigger .a-icon .a-icon-alt").get_attribute("innerText").split()[0]
@@ -55,13 +54,13 @@ class AmazonScraper(WebStoreScraper):
         print(date_fields)
         month = getMonthNumber(date_fields[0]) 
         day = int(date_fields[1])
-        arrival_date = date(2021,month,day)
+        arrival_date = date(2022,month,day)
 
         return productInformation("",image_src,float(puntuacion),str(arrival_date),float(price))
         # return {"precio":float(price),"image_src":image_src,"puntuacion":float(puntuacion),"fecha_entrega":str(arrival_date)}
 
 class EbayScraper(WebStoreScraper):
-    def execute(self) -> productInformation:
+    def execute(self,driver) -> productInformation:
         price = driver.find_element(By.ID,"prcIsum").text.split()[1][1:]
         image_src = driver.find_element(By.ID,"icImg").get_attribute("src")
         puntuacion = driver.find_element(By.CSS_SELECTOR, "#review-ratings-cntr .reviews-star-rating").get_attribute("title").split(",")[0].split()[0]
@@ -69,12 +68,12 @@ class EbayScraper(WebStoreScraper):
         arrival_day = int(arrival_date_fields[0])
         arrival_month = getMonthNumber(arrival_date_fields[1])
 
-        arrival_date = date(2021,arrival_month,arrival_day)
+        arrival_date = date(2022,arrival_month,arrival_day)
         return productInformation("",image_src,float(puntuacion),str(arrival_date),float(price))
         # return {"precio":float(price),"image_src":image_src,"puntuacion":float(puntuacion),"fecha_entrega":str(arrival_date)}
 
 class MercadoLibreScraper(WebStoreScraper):
-    def execute(self) -> productInformation:
+    def execute(self,driver) -> productInformation:
         price = "".join(driver.find_element(By.CLASS_NAME,"price-tag-amount").text.split("\n")[1:]).replace(",",".")
         price_segments = price.split(".")
         if len(price_segments[-1])==3:
@@ -83,7 +82,7 @@ class MercadoLibreScraper(WebStoreScraper):
         image_src = driver.find_element(By.CSS_SELECTOR,".ui-pdp-gallery__figure img").get_attribute("src")
         puntuacion = driver.find_element(By.CLASS_NAME, "ui-pdp-seller__sales-description").text.strip("%")
         arrival_date = date.today()
-        return productInformation("",image_src,float(puntuacion),str(arrival_date),float(price))
+        return productInformation("",image_src,float(puntuacion)/20,str(arrival_date),float(price))
         # return {"precio":float(price),"image_src":image_src,"puntuacion":float(puntuacion)/20,"fecha_entrega":str(fecha_entrega)}
 
 
@@ -98,19 +97,19 @@ def getScrapingStrategy(url:str)  ->WebStoreScraper:
 class WebScraper_onlineStore:
     scrapingStrategy: WebStoreScraper  ## the strategy interface
     def __init__(self,url:str):
-        driver.get(url)
+        self.driver =Chrome("/usr/bin/chromedriver",options=chrome_options)
+        self.driver.get(url)
 
     def setScrapingMethod(self, strategy: WebStoreScraper ) -> None:
         self.scrapingStrategy = strategy
 
     def run(self) -> productInformation:
-        return  self.scrapingStrategy.execute()
+        return  self.scrapingStrategy.execute(self.driver)
 
 
 @app.route('/',methods=["POST"])
 def parse():
     url = str(request.form.get("url"))
-    print(url)
     scraper = WebScraper_onlineStore(url)
 
     scrapingStrategy = getScrapingStrategy(url)

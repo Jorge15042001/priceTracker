@@ -1,5 +1,14 @@
 {
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "postcss css/*.css  --dir public/css/",
+    "watch": "postcss css/*.css  --dir public/css/ -w"
+  },
   "devDependencies": {
     "tailwindcss": "^3.0.15"
+  },
+  "dependencies": {
+    "postcss": "^8.4.5",
+    "postcss-cli": "^9.1.0"
   }
 }

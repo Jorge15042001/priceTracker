@@ -1,0 +1,33 @@
+/* agregar producto  */
+body{
+  height: 100vh;
+}
+
+.whole-page-form{
+  @apply sm:h-full sm:w-full;
+  @apply sm:flex sm:items-center sm:justify-center;
+
+}
+form{
+  @apply bg-blue-100;
+  @apply p-2;
+}
+form > .form-row > h1{
+  @apply sm:w-full;
+  @apply sm:text-center;
+}
+.form-row{
+  @apply sm:w-full;
+  @apply my-5;
+}
+
+form button{
+  @apply sm:px-3 sm:py-1;
+  @apply sm:rounded-md;
+  @apply sm:bg-primary;
+}
+.row-button{
+  @apply sm:flex;
+  @apply sm:justify-center;
+}
+

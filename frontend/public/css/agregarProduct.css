@@ -1,0 +1,66 @@
+/* agregar producto  */
+body{
+  height: 100vh;
+}
+
+@media (min-width: 640px){
+  .whole-page-form{
+    height: 100%;
+  }
+  .whole-page-form{
+    width: 100%;
+  }
+  .whole-page-form{
+    display: flex;
+  }
+  .whole-page-form{
+    align-items: center;
+  }
+  .whole-page-form{
+    justify-content: center;
+  }
+}
+form{
+  --tw-bg-opacity: 1;
+  background-color: rgb(219 234 254 / var(--tw-bg-opacity));
+  padding: 0.5rem;
+}
+@media (min-width: 640px){
+  form > .form-row > h1{
+    width: 100%;
+  }
+  form > .form-row > h1{
+    text-align: center;
+  }
+  .form-row{
+    width: 100%;
+  }
+}
+.form-row{
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 640px){
+  form button{
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  form button{
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+  form button{
+    border-radius: 0.375rem;
+  }
+  form button{
+    background-color: var(--color-primary);
+  }
+  .row-button{
+    display: flex;
+  }
+  .row-button{
+    justify-content: center;
+  }
+}
+
